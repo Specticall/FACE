@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "outDir": "dist",
+    "sourceMap": true,
+    "noImplicitAny": true,
+
+    /* Linting */
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "enviroment.d.ts"],
+  "ts-node": {
+    "files": true
+  }
+}

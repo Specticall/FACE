@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-weight: 500;
+  font-family: "Inter";
+}
+
+.CircularProgressbar .CircularProgressbar-path {
+  stroke: url(#camera-loading);
+}
+
+/* #root {
+  overflow-x: hidden;
+} */
