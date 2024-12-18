@@ -1,21 +1,17 @@
 import { RequestHandler } from "express";
-import OpenAI from "openai";
 import { AppError } from "../lib/AppError";
 import { STATUS_CODE } from "../lib/statusCode";
 import { PrismaClient } from "@prisma/client";
-import { DetectionData } from "../lib/types";
 import {
   CLOUDINARY_KEY,
   CLOUDINARY_NAME,
   CLOUDINARY_SECRET,
 } from "../lib/config";
 import { v2 as cloudinary } from "cloudinary";
+import { diagnose } from "../lib/diagnose";
+import axios from "axios";
 
 const prisma = new PrismaClient();
-
-const openAI = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 cloudinary.config({
   cloud_name: CLOUDINARY_NAME,
@@ -47,7 +43,14 @@ export const diagnoseDisease: RequestHandler = async (
     }
 
     // Request diagnosis data from GPT
-    const dataAnalysis = await diagnoseWithGPT(base64_image);
+    // const skinAnalysis = await axios.post(
+    //   process.env.DIAGNOSE_SERVICE_API as string,
+    //   {
+    //     base64_image: base64_image,
+    //   }
+    // );
+    const dataAnalysis = await diagnose(base64_image);
+
     if (!dataAnalysis || "message" in dataAnalysis) {
       throw new AppError(
         "Data analysis was not successful",
@@ -172,31 +175,4 @@ export const getDiagnosis: RequestHandler = async (request, response, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-const diagnoseWithGPT = async (base64_image: string) => {
-  const GPTResponse = await openAI.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `We're currently playing a role play game, Act like you are a dermatology specialist, from the image given respond in the form of the following JSON. {"skin_score": <SCORE HERE OUT OF 100>, "skin_age": <SKIN AGE HERE>: "skin_type": <TYPE HERE>,"conerns": [{"name": <NAME HERE>, "summary": <DISEASE SUMMARY>, "location": <LOCATION DATA>}]}. e.g. {"skin_score": 80, "skin_type": 24, "skin_type": "Oily", "concerns": [{"name": "acne", "summary": "Acne is an inflammatory disorder of the skin...", "location": "left side of the face"}]}. "skin_type" may only contain either "Normal", "Oily", "Dry" or "Combination". the concerns array can be left empty if no diesases is found. Make sure the respond is not in mark down (raw JSON only)`,
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: base64_image,
-            },
-          },
-        ],
-      },
-    ],
-  });
-
-  const dataAnalysisJSON = GPTResponse.choices[0].message.content;
-  if (!dataAnalysisJSON) return undefined;
-  return JSON.parse(dataAnalysisJSON) as DetectionData;
 };
