@@ -15,3 +15,4 @@ tsfjs-env/
 .env
 .venv/
 model/
+model & dataset.txt
